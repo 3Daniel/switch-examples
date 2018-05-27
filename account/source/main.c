@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <malloc.h>
 
 #include <switch.h>
 
@@ -27,8 +28,37 @@ int main(int argc, char **argv)
     if (R_FAILED(rc)) {
         printf("accountInitialize() failed: 0x%x\n", rc);
     }
-
+	
     if (R_SUCCEEDED(rc)) {
+		//Get the total number of user accounts
+		s32 user_count = 0;
+		rc = accountGetUserCount(&user_count);
+		
+		if (R_FAILED(rc)) {
+            printf("accountGetUserCount() failed: 0x%x\n", rc);
+        }
+        else {
+            printf("User count = %d\n", user_count);
+        }
+		
+		
+		//Get the user IDs of all users
+		u128 *userIDs;
+		userIDs = malloc(sizeof(u128) * ACC_USER_LIST_SIZE);
+		
+		rc = accountListAllUsers(userIDs);
+		
+		if (R_FAILED(rc)) {
+            printf("accountListAllUsers() failed: 0x%x\n", rc);
+        }
+        else if (R_SUCCEEDED(rc)){
+			// If there are less than 8 users created, then there will be some empty IDs 
+			// so we only loop for the number of users that we counted previously
+            for(int i = 0; i < user_count; i++){
+				printf("Found UserId: 0x%lx 0x%lx\n", (u64)(userIDs[i] >> 64), (u64)userIDs[i]);
+			}
+        }
+		
         rc = accountGetActiveUser(&userID, &account_selected);
 
         if (R_FAILED(rc)) {
